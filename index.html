@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Truck Day" />
+  <meta name="theme-color" content="#1a1a18" />
+  <title>Truck Day</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1a1a18;
+      --surface: #242420;
+      --surface2: #2e2e2a;
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.14);
+      --text: #f0ede6;
+      --muted: #8a8780;
+      --dim: #555450;
+      --accent: #e8a030;
+      --accent-dim: rgba(232,160,48,0.15);
+      --accent-text: #f5c06a;
+      --green: #6bbf7a;
+      --green-dim: rgba(107,191,122,0.15);
+      --red: #e06060;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; overscroll-behavior: none; }
+
+    .app { display: flex; flex-direction: column; height: 100%; max-width: 500px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      padding: calc(var(--safe-top) + 18px) 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+    .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .header-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 300; color: var(--text); line-height: 1; letter-spacing: -0.5px; }
+    .header-title span { color: var(--accent); font-style: italic; }
+    .header-date { font-size: 11px; color: var(--muted); letter-spacing: 0.08em; margin-top: 5px; text-transform: uppercase; }
+    .day-nav { display: flex; align-items: center; gap: 6px; }
+    .day-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+    .day-btn:active { opacity: 0.6; }
+    .day-badge { font-size: 11px; color: var(--accent-text); background: var(--accent-dim); padding: 3px 8px; border-radius: 20px; letter-spacing: 0.04em; }
+
+    /* Tabs */
+    .tabs { display: flex; padding: 10px 20px 0; gap: 0; border-bottom: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+    .tab { flex: 1; text-align: center; padding: 8px 4px 10px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s; }
+    .tab.active { color: var(--accent-text); border-bottom-color: var(--accent); }
+
+    /* Content */
+    .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 20px calc(var(--safe-bottom) + 80px); }
+
+    /* Progress bar */
+    .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .progress-bar { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+    .progress-label { font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 50px; text-align: right; }
+
+    /* Section */
+    .section-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; margin-top: 18px; }
+    .section-label:first-child { margin-top: 0; }
+
+    /* Task */
+    .task { display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; cursor: pointer; transition: background 0.1s; }
+    .task:active { background: var(--surface2); }
+    .task.done { opacity: 0.5; }
+    .task.done .task-text { text-decoration: line-through; }
+    .check { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border2); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .task.done .check { background: var(--green); border-color: var(--green); }
+    .check-tick { display: none; color: #fff; font-size: 11px; }
+    .task.done .check-tick { display: block; }
+    .task-body { flex: 1; min-width: 0; }
+    .task-text { font-size: 13.5px; line-height: 1.45; color: var(--text); }
+    .task-meta { display: flex; gap: 6px; margin-top: 4px; align-items: center; flex-wrap: wrap; }
+    .cat-pill { font-size: 10px; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 20px; }
+    .cat-prep { background: rgba(232,160,48,0.15); color: #f5c06a; }
+    .cat-ops  { background: rgba(100,160,230,0.15); color: #90bef5; }
+    .cat-admin{ background: rgba(107,191,122,0.15); color: #85d494; }
+    .cat-other{ background: rgba(138,135,128,0.15); color: #a8a59e; }
+    .done-time { font-size: 10px; color: var(--dim); }
+    .task-del { background: none; border: none; color: var(--dim); font-size: 16px; cursor: pointer; padding: 0 2px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+    .task-del:active { color: var(--red); }
+
+    /* Add task bar */
+    .add-bar { position: fixed; bottom: calc(var(--safe-bottom) + 0px); left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; padding: 10px 16px calc(var(--safe-bottom) + 10px); background: var(--bg); border-top: 1px solid var(--border); display: flex; gap: 8px; z-index: 100; }
+    .add-input { flex: 1; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 13px; outline: none; }
+    .add-input:focus { border-color: var(--accent); }
+    .add-input::placeholder { color: var(--dim); }
+    .add-select { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; padding: 0 8px; outline: none; cursor: pointer; }
+    .add-btn { background: var(--accent); border: none; border-radius: 10px; color: #1a1a18; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .add-btn:active { opacity: 0.75; }
+
+    /* Notes */
+    .note { padding: 12px 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; }
+    .note-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .note-ts { font-size: 10px; color: var(--dim); letter-spacing: 0.04em; }
+    .note-del { background: none; border: none; color: var(--dim); cursor: pointer; font-size: 15px; }
+    .note-del:active { color: var(--red); }
+    .note-text { font-size: 13px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+    .note-compose { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 11px 13px; width: 100%; resize: none; outline: none; min-height: 80px; }
+    .note-compose:focus { border-color: var(--accent); }
+    .note-compose::placeholder { color: var(--dim); }
+    .note-save { width: 100%; margin-top: 6px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px; cursor: pointer; }
+    .note-save:active { opacity: 0.7; }
+
+    /* Stats cards */
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; }
+    .stat-label { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+    .stat-val { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 300; color: var(--text); line-height: 1; }
+    .stat-val.accent { color: var(--accent-text); }
+    .stat-val.green { color: var(--green); }
+
+    /* Cat breakdown */
+    .cat-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .cat-row:last-child { border-bottom: none; }
+    .cat-name { font-size: 12px; color: var(--muted); min-width: 80px; }
+    .cat-bar-wrap { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 2px; }
+    .cat-count { font-size: 12px; color: var(--dim); min-width: 20px; text-align: right; }
+
+    /* Log */
+    .log-entry { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .log-entry:last-child { border-bottom: none; }
+    .log-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dim); flex-shrink: 0; margin-top: 5px; }
+    .log-time { font-size: 11px; color: var(--dim); white-space: nowrap; min-width: 40px; }
+    .log-msg { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .empty { font-size: 12px; color: var(--dim); padding: 14px 0; }
+
+    /* Pane visibility */
+    .pane { display: none; }
+    .pane.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-title">Truck <span>Day</span></div>
+        <div class="header-date" id="hdate"></div>
+      </div>
+      <div class="day-nav">
+        <button class="day-btn" onclick="changeDay(-1)">&#8592;</button>
+        <span class="day-badge" id="day-badge">Today</span>
+        <button class="day-btn" onclick="changeDay(1)">&#8594;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('tasks',this)">Tasks</div>
+    <div class="tab" onclick="switchTab('notes',this)">Notes</div>
+    <div class="tab" onclick="switchTab('overview',this)">Overview</div>
+  </div>
+
+  <div class="content">
+    <!-- TASKS -->
+    <div class="pane active" id="pane-tasks">
+      <div class="progress-row">
+        <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="progress-label" id="prog-label">0 / 0</div>
+      </div>
+
+      <div class="section-label">Prep</div>
+      <div id="list-prep"></div>
+      <div class="section-label">Operations</div>
+      <div id="list-ops"></div>
+      <div class="section-label">Admin</div>
+      <div id="list-admin"></div>
+      <div class="section-label">Other</div>
+      <div id="list-other"></div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="pane" id="pane-notes">
+      <textarea class="note-compose" id="note-input" placeholder="What happened? What did you do? Anything worth remembering...&#10;&#10;Tap save when done."></textarea>
+      <button class="note-save" onclick="saveNote()">Save note</button>
+      <div class="section-label" style="margin-top:20px;">Saved notes</div>
+      <div id="note-list"></div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="pane" id="pane-overview">
+      <div class="stats-row" id="stats-grid"></div>
+      <div class="section-label">By category</div>
+      <div id="cat-breakdown"></div>
+      <div class="section-label" style="margin-top:18px;">Activity log</div>
+      <div id="act-log"></div>
+    </div>
+  </div>
+
+  <!-- Add bar (tasks tab only) -->
+  <div class="add-bar" id="add-bar">
+    <input class="add-input" id="task-input" placeholder="New task..." />
+    <select class="add-select" id="task-cat">
+      <option value="prep">Prep</option>
+      <option value="ops">Ops</option>
+      <option value="admin">Admin</option>
+      <option value="other">Other</option>
+    </select>
+    <button class="add-btn" onclick="addTask()">+</button>
+  </div>
+</div>
+
+<script>
+const CATS = ['prep','ops','admin','other'];
+const CAT_LABEL = { prep:'Prep', ops:'Operations', admin:'Admin', other:'Other' };
+const CAT_COLOR = { prep:'#e8a030', ops:'#64a0e6', admin:'#6bbf7a', other:'#8a8780' };
+
+let dayOffset = 0;
+let db = {};
+
+function key(off) {
+  const d = new Date();
+  d.setDate(d.getDate() + (off ?? dayOffset));
+  return d.toISOString().slice(0,10);
+}
+
+function day() {
+  const k = key();
+  if (!db[k]) db[k] = { tasks:[], notes:[], log:[] };
+  return db[k];
+}
+
+function save() {
+  try { localStorage.setItem('truckday_v1', JSON.stringify(db)); } catch(e) {}
+}
+
+function load() {
+  try { const s = localStorage.getItem('truckday_v1'); if(s) db = JSON.parse(s); } catch(e) {}
+}
+
+function addLog(msg) {
+  day().log.push({ t: Date.now(), msg });
+  save();
+}
+
+function fmt(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
+
+function updateHeader() {
+  const d = new Date();
+  d.setDate(d.getDate() + dayOffset);
+  const opts = { weekday:'long', day:'numeric', month:'long' };
+  document.getElementById('hdate').textContent = d.toLocaleDateString('en-NO', opts);
+  const labels = { '-1':'Yesterday', '0':'Today', '1':'Tomorrow' };
+  document.getElementById('day-badge').textContent = labels[dayOffset] || d.toLocaleDateString('en-NO',{month:'short',day:'numeric'});
+}
+
+function renderTasks() {
+  const tasks = day().tasks;
+  const done = tasks.filter(t=>t.done).length;
+  const total = tasks.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-label').textContent = done+' / '+total;
+
+  CATS.forEach(cat => {
+    const el = document.getElementById('list-'+cat);
+    const filtered = tasks.filter(t=>t.cat===cat);
+    if (!filtered.length) { el.innerHTML = '<div class="empty">—</div>'; return; }
+    el.innerHTML = filtered.map((t,li) => {
+      const i = tasks.indexOf(t);
+      return `<div class="task${t.done?' done':''}" onclick="toggleTask(${i})">
+        <div class="check"><span class="check-tick">&#10003;</span></div>
+        <div class="task-body">
+          <div class="task-text">${esc(t.text)}</div>
+          <div class="task-meta">
+            <span class="cat-pill cat-${cat}">${CAT_LABEL[cat]}</span>
+            ${t.done ? `<span class="done-time">${fmt(t.doneAt)}</span>` : ''}
+          </div>
+        </div>
+        <button class="task-del" onclick="event.stopPropagation();delTask(${i})">&#215;</button>
+      </div>`;
+    }).join('');
+  });
+}
+
+function addTask() {
+  const inp = document.getElementById('task-input');
+  const cat = document.getElementById('task-cat').value;
+  const text = inp.value.trim();
+  if (!text) return;
+  day().tasks.push({ text, cat, done:false, createdAt:Date.now() });
+  addLog('Added: '+text);
+  inp.value = '';
+  save();
+  renderTasks();
+  renderOverview();
+}
+
+function toggleTask(i) {
+  const t = day().tasks[i];
+  t.done = !t.done;
+  t.doneAt = t.done ? Date.now() : null;
+  addLog((t.done?'Done':'Reopened')+': '+t.text);
+  save();
+  renderTasks();
+  renderOverview();
+}
+
+function delTask(i) {
+  const t = day().tasks[i];
+  addLog('Removed: '+t.text);
+  day().tasks.splice(i,1);
+  save();
+  renderTasks();
+  renderOverview();
+}
+
+function renderNotes() {
+  const notes = [...day().notes].reverse();
+  const el = document.getElementById('note-list');
+  if (!notes.length) { el.innerHTML = '<div class="empty">No notes yet</div>'; return; }
+  el.innerHTML = notes.map((n,ri) => {
+    const i = day().notes.length-1-ri;
+    return `<div class="note">
+      <div class="note-header">
+        <span class="note-ts">${fmt(n.t)}</span>
+        <button class="note-del" onclick="delNote(${i})">&#215;</button>
+      </div>
+      <div class="note-text">${esc(n.text)}</div>
+    </div>`;
+  }).join('');
+}
+
+function saveNote() {
+  const ta = document.getElementById('note-input');
+  const text = ta.value.trim();
+  if (!text) return;
+  day().notes.push({ t:Date.now(), text });
+  addLog('Added note');
+  ta.value = '';
+  save();
+  renderNotes();
+  renderOverview();
+}
+
+function renderOverview() {
+  const d = day();
+  const total = d.tasks.length;
+  const done = d.tasks.filter(t=>t.done).length;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat"><div class="stat-label">Completed</div><div class="stat-val green">${done}</div></div>
+    <div class="stat"><div class="stat-label">Remaining</div><div class="stat-val accent">${total-done}</div></div>
+    <div class="stat"><div class="stat-label">Total tasks</div><div class="stat-val">${total}</div></div>
+    <div class="stat"><div class="stat-label">Notes</div><div class="stat-val">${d.notes.length}</div></div>
+  `;
+
+  const bd = document.getElementById('cat-breakdown');
+  const maxCount = Math.max(1, ...CATS.map(c=>d.tasks.filter(t=>t.cat===c).length));
+  bd.innerHTML = CATS.map(cat => {
+    const count = d.tasks.filter(t=>t.cat===cat).length;
+    const pct = Math.round(count/maxCount*100);
+    return `<div class="cat-row">
+      <div class="cat-name">${CAT_LABEL[cat]}</div>
+      <div class="cat-bar-wrap"><div class="cat-bar-fill" style="width:${pct}%;background:${CAT_COLOR[cat]}"></div></div>
+      <div class="cat-count">${count}</div>
+    </div>`;
+  }).join('');
+
+  const log = [...d.log].reverse().slice(0,30);
+  const lel = document.getElementById('act-log');
+  if (!log.length) { lel.innerHTML = '<div class="empty">No activity yet</div>'; return; }
+  lel.innerHTML = log.map(l=>`
+    <div class="log-entry">
+      <div class="log-dot"></div>
+      <div class="log-time">${fmt(l.t)}</div>
+      <div class="log-msg">${esc(l.msg)}</div>
+    </div>`).join('');
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pane-'+tab).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('add-bar').style.display = tab==='tasks' ? 'flex' : 'none';
+  if (tab==='overview') renderOverview();
+  if (tab==='notes') renderNotes();
+}
+
+function changeDay(d) {
+  dayOffset = Math.max(-60, Math.min(1, dayOffset+d));
+  updateHeader();
+  renderTasks();
+  renderNotes();
+  renderOverview();
+}
+
+document.getElementById('task-input').addEventListener('keydown', e => {
+  if (e.key==='Enter') addTask();
+});
+
+load();
+updateHeader();
+renderTasks();
+renderNotes();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>
